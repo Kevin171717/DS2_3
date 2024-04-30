@@ -5,6 +5,7 @@
 # include <fstream>                             // ifstream
 #include <sstream>
 #include <cmath>
+#include <iomanip>
 
 using namespace std;
 
@@ -19,7 +20,7 @@ class Read{
 
 public:
     void txtToBin(string fileName);
-    void readF(string,vector<Student> & );
+    bool readF(string,vector<Student> & );
     void readBin(string fileName,vector<Student> &inputData);
 
 };
@@ -32,15 +33,19 @@ private:
         int score[6];
         float avg;
         int HashValue;
-        bool isEmpty;
-        HashMap() : sid(""), sname(""), avg(0.0), HashValue(-1) ,  isEmpty(false) {}
+        bool isEmpty ;
+        HashMap() : sid(""), sname(""), avg(0.0), HashValue(-1) ,  isEmpty(true) {}
     };
+    int tableSize;
 
     void resizeTable( int );
-    void quadraticProbing ( vector<Student> inputData );
+    void quadraticProbing ( vector<Student> inputData, int &);
+    int probNext( int, int & );
+    void write(string, int );
 public:
     vector<HashMap> table;
-    void hashFuction( int, vector<Student> inputData );
+    void hashFuction( int, vector<Student> inputData, string );
+
 
 
 
@@ -74,8 +79,11 @@ int main() {
             cout << endl << "Input a file number ([0] Quit): ";
             cin >> fileName;
             if ( fileName != "0" ) {
-                read.readF( fileName, inputData );
-                hash.hashFuction( inputData.size(), inputData );
+                if ( read.readF( fileName, inputData ) ) {
+                    hash.hashFuction( inputData.size(), inputData, fileName );
+
+                    // cout << endl << "Hash table has been successfully created by Quadratic probing";
+                }
 
             }
 
@@ -96,12 +104,54 @@ int main() {
 }
 
 // Quadratic -------------------------------------------------------------------------------------------------
-void Quadratic ::hashFuction( int size, vector<Student> inputData ) {
+void Quadratic ::hashFuction( int size, vector<Student> inputData, string fileName ) {
+    int totalSearch = 0;
     resizeTable(size);
+    quadraticProbing(inputData, totalSearch);
+    write(fileName, totalSearch);
+}
+
+void Quadratic::quadraticProbing(vector<Student> inputData, int& totalSearch) {
+
+    for ( int i = 0; i < inputData.size(); i++ ) {
+        long long product = 1;
+        for ( char j : inputData[i].sid ) {
+            if ( j <= '9' && j >= '0' ) {
+                product = product*int(j);
+                product = product%tableSize;
+            }
+        }
+
+        int location = product;
+        totalSearch++;
+
+        if ( !table[location].isEmpty )
+            location = probNext( location, totalSearch );
+
+        table[location].isEmpty = false;
+        table[location].HashValue = product;
+        table[location].sid = inputData[i].sid;
+        table[location].sname = inputData[i].sname;
+        table[location].avg = inputData[i].avg;
+        int k = 0;
+        for ( unsigned char j : inputData[i].score ) {
+            table[location].score[k] = j;
+            k++;
+        }
+    }
 
 }
 
-void Quadratic::quadraticProbing(vector<Student> inputData) {
+int Quadratic ::probNext(int location, int &totalSearch ) {
+    int cur = location;
+    int step = 1;
+    while ( !table[cur].isEmpty ) {
+        totalSearch++;
+        cur = location;
+        cur = ( cur + step*step )%tableSize;
+        step++;
+    }
+    return cur;
 
 }
 
@@ -114,7 +164,7 @@ void Quadratic ::resizeTable(int size ) {
         while ( find ) {
             bool isPrime = true;
 
-            for ( int i = 0; i < size ; i++ ) {
+            for ( int i = 2; i < size ; i++ ) {
                 if ( size % i == 0 ) {
                     isPrime = false;
                 }
@@ -127,12 +177,36 @@ void Quadratic ::resizeTable(int size ) {
         }
     }
 
+    tableSize = size;
     table.resize(size);
+}
+
+void Quadratic::write(string fileName, int totalSearch ) {
+    fstream file ;
+    string d = "quadratic" + fileName + ".txt" ;
+    file.open( d.c_str(), ios::out ) ;
+
+    file <<  " --- Hash table created by Quadratic probing ---" << endl ;
+    for( int i = 0 ; i < tableSize ; i++ ) {
+        file << "[" << setw(3) << i << "] " ;
+        if( table[i].isEmpty != true ) {
+            file << setw(10) << table[i].HashValue << ", " << setw(10) << table[i].sid ;
+            file << ", " << setw(10) << table[i].sname << ", " << setw(10) << table[i].avg ;
+        } // if
+        file << endl ;
+
+    }  // for
+
+    file <<  " ----------------------------------------------- " << endl ;
+    file.close();
+    float unsuccessful = float (totalSearch)/float (tableSize);
+    cout << endl << "unsuccessful search: " << unsuccessful <<" comparisons on average";
+
 }
 
 // READ -------------------------------------------------------------------------------------------
 
-void Read ::readF(string fileName,vector<Student> &inputData ) {
+bool Read ::readF(string fileName,vector<Student> &inputData ) {
     string txtFile = "input" + fileName + ".txt";
     string binFile = "input" + fileName + ".bin";
     fstream fileT;
@@ -142,6 +216,7 @@ void Read ::readF(string fileName,vector<Student> &inputData ) {
     if ( !fileT.is_open() && !fileB.is_open() ) {
         cout << endl << "### " << binFile << " does not exist! ###" ;
         cout << endl << "### " << txtFile << " does not exist! ###" << endl;
+        return false;
     }
     else if ( fileT.is_open() && !fileB.is_open() ) {
         cout << endl << "### input301.bin does not exist! ###";
@@ -149,6 +224,7 @@ void Read ::readF(string fileName,vector<Student> &inputData ) {
     }
 
     readBin(fileName, inputData);
+    return true;
 
 }
 
@@ -210,6 +286,11 @@ void Read ::readBin( string fileName,vector<Student> &inputData ) {
     while ( inFile.read(reinterpret_cast<char*>(&student), size) ) {
         inputData.push_back(student);
     }
+/*
+    for ( int i = 0 ; i < inputData.size(); i++ ){
+        cout << endl << inputData[i].sid;
+    }
+*/
 
     inFile.close();
 
