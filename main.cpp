@@ -41,7 +41,8 @@ private:
     void resizeTable( int );
     void quadraticProbing ( vector<Student> inputData, int &);
     int probNext( int, int & );
-    void write(string, int );
+    void write(string, int, vector<Student> );
+    int findUnsuccessful( );
 public:
     vector<HashMap> table;
     void hashFuction( int, vector<Student> inputData, string );
@@ -51,6 +52,7 @@ public:
 
     void clearUp() {            // erase the object content
         table.clear();
+        tableSize = 0;
     } // end clearUp
 
 
@@ -76,12 +78,12 @@ int main() {
         cout << endl << "Input a choice(0, 1, 2):";
         cin >> command; // get a command
         if (command == 1) {
+            hash.clearUp();
             cout << endl << "Input a file number ([0] Quit): ";
             cin >> fileName;
             if ( fileName != "0" ) {
                 if ( read.readF( fileName, inputData ) ) {
                     hash.hashFuction( inputData.size(), inputData, fileName );
-
                     // cout << endl << "Hash table has been successfully created by Quadratic probing";
                 }
 
@@ -108,7 +110,7 @@ void Quadratic ::hashFuction( int size, vector<Student> inputData, string fileNa
     int totalSearch = 0;
     resizeTable(size);
     quadraticProbing(inputData, totalSearch);
-    write(fileName, totalSearch);
+    write(fileName, totalSearch, inputData);
 }
 
 void Quadratic::quadraticProbing(vector<Student> inputData, int& totalSearch) {
@@ -181,7 +183,8 @@ void Quadratic ::resizeTable(int size ) {
     table.resize(size);
 }
 
-void Quadratic::write(string fileName, int totalSearch ) {
+
+void Quadratic::write(string fileName, int totalSearch, vector<Student> inputData ) {
     fstream file ;
     string d = "quadratic" + fileName + ".txt" ;
     file.open( d.c_str(), ios::out ) ;
@@ -199,9 +202,29 @@ void Quadratic::write(string fileName, int totalSearch ) {
 
     file <<  " ----------------------------------------------- " << endl ;
     file.close();
-    float unsuccessful = float (totalSearch)/float (tableSize);
-    cout << endl << "unsuccessful search: " << unsuccessful <<" comparisons on average";
 
+    int unsuccessful = findUnsuccessful();
+    double unsuccessfulRate = float (unsuccessful)/float (tableSize);
+    double successfulRate = float (totalSearch)/float (inputData.size());
+    cout << endl << "unsuccessful search: " << unsuccessfulRate <<" comparisons on average";
+    cout << endl << "successful search: " << successfulRate <<" comparisons on average";
+
+}
+
+int Quadratic::findUnsuccessful( ) {
+    int total = 0;
+    for ( int i = 0 ; i < tableSize; i++ ) {
+        int cur = i;
+        int step = 1;
+        while ( !table[cur].isEmpty && step < tableSize ) {
+            total++;
+            cur = i;
+            cur = ( cur + step*step )%tableSize;
+            step++;
+        }
+    }
+
+    return total;
 }
 
 // READ -------------------------------------------------------------------------------------------
