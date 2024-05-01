@@ -1,10 +1,9 @@
 #include <iostream>
 # include <vector>                              // vector
-# include <iostream>                            // cin, cout, ...
-# include <stdlib.h>							// atoi
 # include <fstream>                             // ifstream
 #include <sstream>
 #include <cmath>
+#include <iomanip>
 #include <iomanip>
 
 using namespace std;
@@ -78,13 +77,13 @@ int main() {
         cout << endl << "Input a choice(0, 1, 2):";
         cin >> command; // get a command
         if (command == 1) {
+            inputData.clear();
             hash.clearUp();
             cout << endl << "Input a file number ([0] Quit): ";
             cin >> fileName;
             if ( fileName != "0" ) {
                 if ( read.readF( fileName, inputData ) ) {
                     hash.hashFuction( inputData.size(), inputData, fileName );
-                    // cout << endl << "Hash table has been successfully created by Quadratic probing";
                 }
 
             }
@@ -204,8 +203,9 @@ void Quadratic::write(string fileName, int totalSearch, vector<Student> inputDat
     file.close();
 
     int unsuccessful = findUnsuccessful();
-    double unsuccessfulRate = float (unsuccessful)/float (tableSize);
-    double successfulRate = float (totalSearch)/float (inputData.size());
+    double unsuccessfulRate = static_cast<double>(unsuccessful) / static_cast<double>(tableSize);
+    double successfulRate = static_cast<double>(totalSearch) / static_cast<double>(inputData.size());
+    cout << fixed << setprecision(4);
     cout << endl << "unsuccessful search: " << unsuccessfulRate <<" comparisons on average";
     cout << endl << "successful search: " << successfulRate <<" comparisons on average";
 
@@ -309,11 +309,6 @@ void Read ::readBin( string fileName,vector<Student> &inputData ) {
     while ( inFile.read(reinterpret_cast<char*>(&student), size) ) {
         inputData.push_back(student);
     }
-/*
-    for ( int i = 0 ; i < inputData.size(); i++ ){
-        cout << endl << inputData[i].sid;
-    }
-*/
 
     inFile.close();
 
