@@ -52,10 +52,14 @@ private:
     void doubleHashProbing ( vector<Student> inputData, int &);
     int probNext(  int, int &, int );
     void write(string, int, vector<Student> );
-
+    int findNext(int, int&, int, int, string);
 public:
     vector<HashMap> table;
     void hashFuction( int, vector<Student> inputData, string );
+    void find(vector<Student>, string );
+
+
+
 
     void clearUp() {            // erase the object content
         table.clear();
@@ -65,8 +69,6 @@ public:
     ~doubleHashing() { clearUp(); }      // destructor: destroy the objec
 
 };
-
-
 
 class Quadratic{
 
@@ -156,7 +158,6 @@ int main() {
         }
         else {
             cout << endl << "Command does not exist!" << endl;
-
         }
     }
 
@@ -171,8 +172,62 @@ void doubleHashing ::hashFuction( int size, vector<Student> inputData, string fi
     resizeTable(size);
     doubleHashProbing(inputData, totalSearch);
     write(fileName, totalSearch, inputData);
+    string sid = "";
+
+    while ( sid != "0" ) {
+        cout << "Input student ID to search ([0] Quit) :";
+        cin >> sid;
+        if( sid != "0" ) this->find( inputData, sid ) ;
+        else if( sid == "0" ) cout << endl ;
+    }
 
 }
+
+void doubleHashing ::find( vector<Student> inputData, string sid ) {
+    long long product = 1;
+    long long product1 = 1;
+    int step = 0 ;
+    for ( char j : sid ) { //  
+        if ( j <= '9' && j >= '0' ) {
+            product = product*int(j);
+            product = product%this->tableSize;
+        } // if
+    } // for
+
+    for ( char j : sid ) {
+        if ( j <= '9' && j >= '0' ) product1 = product1*int(j);
+    } // for
+
+    step = this->step(inputData.size(), product1);
+    int location = product;
+    int total = 1;
+
+    if ( table[location].sid != sid )location = findNext( table.size(), total, location, step, sid );
+
+    if(location!=-1) {
+        if (floor(table[location].avg) != table[location].avg) {
+            cout << endl << "{ " << table[location].sid << ", " << table[location].sname << ", " <<fixed << setprecision(2) << table[location].avg << " } " << "is found after " << total << " probes." << endl  << endl;
+        } else {
+            cout << endl << "{ " << table[location].sid << ", " << table[location].sname << ", " << static_cast<int>(table[location].avg) << " } " << "is found after " << total << " probes." << endl << endl ;
+        }
+    }
+    else cout << endl << sid << " is not found after "  << total << " probes" << endl << endl;
+
+
+}
+
+
+int doubleHashing::findNext( int size, int & total, int location, int step, string sid  ) {
+    int cur = location ;
+    while( table[cur].sid != sid ) {
+        cur = (cur+step)%size;
+        total++;
+        if ( table[cur].sid == sid ) return cur ;
+        if ( table[cur].sid == "" || (cur == location  && table[cur].sid != sid) ) return -1 ;
+    }
+}
+
+
 void doubleHashing::doubleHashProbing(vector<Student> inputData, int& totalSearch) {
 
     for ( int i = 0; i < inputData.size(); i++ ) {
@@ -191,7 +246,6 @@ void doubleHashing::doubleHashProbing(vector<Student> inputData, int& totalSearc
         } // for
 
         step = this->step(inputData.size(), product1);
-
         int location = product;
 
         totalSearch++;
@@ -311,7 +365,6 @@ void doubleHashing::write(string fileName, int totalSearch, vector<Student> inpu
 
 }
 
-
 // Quadratic -------------------------------------------------------------------------------------------------
 void Quadratic ::hashFuction( int size, vector<Student> inputData, string fileName ) {
     int totalSearch = 0;
@@ -322,11 +375,18 @@ void Quadratic ::hashFuction( int size, vector<Student> inputData, string fileNa
     bool isFind = false;
     int step = 0;
     while ( key != "0" ) {
-        cout << endl << "Input student ID to search ([0] Quit) :";
+        cout << "Input student ID to search ([0] Quit) :";
         cin >> key;
-        isFind = findLocation(key, step);
-        if ( !isFind )
-            cout << endl << key << " is not found after "  << step << " probes";
+
+        if( key != "0" ) {
+            isFind = findLocation(key, step);
+            if ( !isFind )
+                cout << endl << key << " is not found after "  << step << " probes" << endl << endl;
+
+        }
+        else cout << endl ;
+        step = 0;
+
     }
 
 }
@@ -339,18 +399,26 @@ bool Quadratic ::findLocation( string key, int &step ) {
             product = product%tableSize;
         }
     }
+
+
     int location = product;
 
     while ( !table[location].isEmpty ) {
-        step++;
+
         location = product;
         location = (step*step + product)%tableSize;
+        string id;
+
         if ( key == table[location].sid ) {
             step++;
-            cout << endl << "{ " << table[location].sid << ", " << table[location].sname << ", " << table[location].avg << " }";
-            cout << "is found after " << step << " probes.";
+            if (floor(table[location].avg) != table[location].avg) {
+                cout << endl << "{ " << table[location].sid << ", " << table[location].sname << ", " <<fixed << setprecision(2) << table[location].avg << " } " << "is found after " << step << " probes." << endl << endl ;
+            } else {
+                cout << endl << "{ " << table[location].sid << ", " << table[location].sname << ", " << static_cast<int>(table[location].avg) << " } " << "is found after " << step << " probes." << endl << endl ;
+            }
             return true;
         }
+        step++;
     }
 
     step++;
